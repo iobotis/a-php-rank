@@ -1,8 +1,7 @@
 <?php
 
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * This is a test file to run througn command line.
  */
 
 print "Please choose an action:\n";
@@ -44,14 +43,18 @@ if ($number == 2) {
     }
 } elseif ($number == 1) {
     require_once 'SimpleRanking.php';
-    $id = 100;
+    $id = 101;
     try {
         SimpleRanking::setMySqlConnection($mysqli);
         $simple_ranking = new SimpleRanking($table, $row_score, $rank_row);
         print 'Rank of ' . $table . ' row with id = ' . $id .
-                ' is :' . $simple_ranking->getRank($id) . "\n";
-        print 'Row of ' . $table . ' at rank = 25' .
-                ' is :' . implode("\n", $simple_ranking->getRowsAtRank(25)) . "\n";
+                ' is : ' . $simple_ranking->getRank($id) . "\n";
+        $counter = 25;
+        $names = array_map(function($arr) use (&$counter) {
+                    return $counter++ . '.' . $arr['name'];
+                }, $simple_ranking->getRowsAtRank(25 , 10));
+        print '10 rows of ' . $table . ' starting at rank = 25' .
+                ' is :' . "\n" . implode("\n", $names) . "\n";
     } catch (Exception $e) {
         print $e->getMessage();
         die();

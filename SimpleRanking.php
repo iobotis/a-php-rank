@@ -1,15 +1,12 @@
 <?php
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 include 'RankingAlgorithmInterface.php';
 
 /**
- * Description of SimpleRanking
+ * SimpleRanking is simple way to rank a table based on a score row of that
+ * table.
  *
- * @author jb
+ * @author Ioannis Botis
  */
 class SimpleRanking implements RankingAlgorithmInterface {
 
@@ -24,13 +21,24 @@ class SimpleRanking implements RankingAlgorithmInterface {
         $this->row_score = $row_score;
     }
 
+    /**
+     * Define the default mysql connection to be used for this object.
+     * @param mysqli object $mysqli_connection
+     * @throws Exception
+     */
     public static function setMySqlConnection($mysqli_connection) {
-        if ($mysqli_connection->connect_errno) {
+        if (!is_a($mysqli_connection, 'mysqli') || $mysqli_connection->connect_errno) {
             throw new Exception("Failed to connect to MySQL: (" . $mysqli_connection->connect_errno . ") " . $mysqli_connection->connect_error);
         }
         self::$mysqli_connection = $mysqli_connection;
     }
 
+    /**
+     * 
+     * @param type $primary_key
+     * @return type
+     * @throws Exception
+     */
     public function getRank($primary_key) {
         $id = self::$mysqli_connection->real_escape_string($primary_key);
         $query = "SELECT count(*) as rank" .
@@ -52,14 +60,17 @@ class SimpleRanking implements RankingAlgorithmInterface {
                 "ORDER BY {$this->row_score} DESC " .
                 "LIMIT $rank, $total";
         $res = self::$mysqli_connection->query($query);
-        print $query;
         if (!$res) {
             throw new Exception("Table creation failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
         if ($res->num_rows === 0) {
             return array();
         }
-        return $res->fetch_array();
+        $rows = array();
+        while ($row = $res->fetch_assoc()) {
+            $rows[] = $row;
+        }
+        return $rows;
     }
 
     public function isReady() {
