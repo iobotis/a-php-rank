@@ -33,12 +33,6 @@ class SimpleRanking implements RankingAlgorithmInterface {
         self::$mysqli_connection = $mysqli_connection;
     }
 
-    /**
-     * 
-     * @param type $primary_key
-     * @return type
-     * @throws Exception
-     */
     public function getRank($primary_key) {
         $id = self::$mysqli_connection->real_escape_string($primary_key);
         $query = "SELECT count(*) as rank" .
