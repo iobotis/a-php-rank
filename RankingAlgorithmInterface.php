@@ -14,6 +14,8 @@ interface RankingAlgorithmInterface {
     public function isReady();
 
     public function run();
+    
+    public function getRank($primary_key);
 }
 
 ?>
