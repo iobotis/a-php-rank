@@ -40,7 +40,7 @@ class SimpleRanking implements RankingAlgorithmInterface {
                 "( SELECT {$this->row_score} FROM {$this->table_name} WHERE id = '$id' )";
         $res = self::$mysqli_connection->query($query);
         if (!$res) {
-            throw new Exception("Table creation failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+            throw new Exception("Query failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
         $row = $res->fetch_assoc();
         return $row['rank'];
@@ -55,7 +55,7 @@ class SimpleRanking implements RankingAlgorithmInterface {
                 "LIMIT $rank, $total";
         $res = self::$mysqli_connection->query($query);
         if (!$res) {
-            throw new Exception("Table creation failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+            throw new Exception("Query rows failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
         if ($res->num_rows === 0) {
             return array();
@@ -72,7 +72,18 @@ class SimpleRanking implements RankingAlgorithmInterface {
     }
 
     public function run() {
-        ;
+        // Lets update the rank column based on the score value.
+        $query = "UPDATE {$this->table_name} SET {$this->rank_row} = @r:= (@r+1)" .
+                " ORDER BY {$this->row_score} DESC;";
+        $res = self::$mysqli_connection->query("SET @r=0; ");
+        if (!$res) {
+            throw new Exception("Rank update failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+        }
+        $res = self::$mysqli_connection->query($query);
+        if (!$res) {
+            throw new Exception("Rank update failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+        }
+        return TRUE;
     }
 
 }
