@@ -7,6 +7,7 @@
 print "Please choose an action:\n";
 print "1. Run test 1.\n";
 print "2. Create records.\n";
+print "3. Update rank column\n";
 
 $stdin = fopen('php://stdin', 'r');
 fscanf($stdin, "%d\n", $number); // reads number from STDIN
@@ -52,9 +53,19 @@ if ($number == 2) {
         $counter = 25;
         $names = array_map(function($arr) use (&$counter) {
                     return $counter++ . '.' . $arr['name'];
-                }, $simple_ranking->getRowsAtRank(25 , 10));
+                }, $simple_ranking->getRowsAtRank(25, 10));
         print '10 rows of ' . $table . ' starting at rank = 25' .
                 ' is :' . "\n" . implode("\n", $names) . "\n";
+    } catch (Exception $e) {
+        print $e->getMessage();
+        die();
+    }
+} elseif ($number == 3) {
+    require_once 'SimpleRanking.php';
+    try {
+        SimpleRanking::setMySqlConnection($mysqli);
+        $simple_ranking = new SimpleRanking($table, $row_score, $rank_row);
+        $simple_ranking->run();
     } catch (Exception $e) {
         print $e->getMessage();
         die();
