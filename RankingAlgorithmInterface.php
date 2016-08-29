@@ -25,7 +25,7 @@ interface RankingAlgorithmInterface {
      * @param int $primary_key
      * @return int the rank of the row.
      */
-    public function getRank($primary_key);
+    public function getRank($column, $value);
 
     /**
      * Find the rows at a specific rank.

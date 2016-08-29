@@ -33,11 +33,12 @@ class SimpleRanking implements RankingAlgorithmInterface {
         self::$mysqli_connection = $mysqli_connection;
     }
 
-    public function getRank($primary_key) {
-        $id = self::$mysqli_connection->real_escape_string($primary_key);
+    public function getRank($column, $value) {
+        $column = self::$mysqli_connection->real_escape_string($column);
+        $value = self::$mysqli_connection->real_escape_string($value);
         $query = "SELECT count(*) as rank" .
                 " FROM {$this->table_name} WHERE {$this->row_score} > " .
-                "( SELECT {$this->row_score} FROM {$this->table_name} WHERE id = '$id' )";
+                "( SELECT {$this->row_score} FROM {$this->table_name} WHERE `" . $column . "` = '$value' )";
         $res = self::$mysqli_connection->query($query);
         if (!$res) {
             throw new Exception("Query failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
@@ -68,7 +69,7 @@ class SimpleRanking implements RankingAlgorithmInterface {
     }
 
     public function isReady() {
-        ;
+        return true;
     }
 
     public function run() {
