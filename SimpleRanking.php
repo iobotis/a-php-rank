@@ -36,22 +36,30 @@ class SimpleRanking implements RankingAlgorithmInterface {
     public function getRank($column, $value) {
         $column = self::$mysqli_connection->real_escape_string($column);
         $value = self::$mysqli_connection->real_escape_string($value);
-        $query = "SELECT count(*) as rank" .
+        $query = "SELECT count(*) as rank,@score" .
                 " FROM {$this->table_name} WHERE {$this->row_score} > " .
-                "( SELECT {$this->row_score} FROM {$this->table_name} WHERE `" . $column . "` = '$value' )";
-        $res = self::$mysqli_connection->query($query);
-        if (!$res) {
+                "@score:=( SELECT {$this->row_score} FROM {$this->table_name} WHERE `" . $column . "` = ? )";
+
+        if( $stmt = self::$mysqli_connection->prepare($query) ) {
+            $stmt->bind_param("s", $value);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            if( !$row['@score'] ) {
+                throw new Exception('Row does not exist.');
+            }
+            return (int) ($row['rank'] + 1);
+        }
+        else {
             throw new Exception("Query failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
-        $row = $res->fetch_assoc();
-        return $row['rank'];
     }
 
     public function getRowsAtRank($rank, $total = 1) {
         $rank = intval(self::$mysqli_connection->real_escape_string($rank));
         $total = intval(self::$mysqli_connection->real_escape_string($total));
         $query = "SELECT * " .
-                "FROM {$this->table_name} " .
+                "FROM `{$this->table_name}` " .
                 "ORDER BY {$this->row_score} DESC " .
                 "LIMIT $rank, $total";
         $res = self::$mysqli_connection->query($query);
@@ -85,6 +93,11 @@ class SimpleRanking implements RankingAlgorithmInterface {
             throw new Exception("Rank update failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
         return TRUE;
+    }
+
+    public function __destruct()
+    {
+        self::$mysqli_connection->close();
     }
 
 }
