@@ -6,7 +6,8 @@ namespace Ranking;
  * about the ranking of the records we have.
  * @author Ioannis Botis
  */
-interface AlgorithmInterface {
+interface AlgorithmInterface
+{
 
     /**
      * Depending on the algorithm used for ranking, maybe the ranking is not
