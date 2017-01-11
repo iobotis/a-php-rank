@@ -22,17 +22,16 @@ interface RankingAlgorithmInterface {
 
     /**
      * Find the rank of a specific row.
-     * @param string $column the column to filter with.
-     * @param string $value the value the column has.
+     * @param RankModel $rankModel the value the column has.
      * @return int the rank of the row.
      */
-    public function getRank($column, $value);
+    public function getRank(RankModel $rankModel);
 
     /**
      * Find the rows at a specific rank.
      * @param int $rank
      * @param int $total
-     * @return array of rows of the table to rank.
+     * @return RankModel[]
      */
     public function getRowsAtRank($rank, $total = 1);
 }
