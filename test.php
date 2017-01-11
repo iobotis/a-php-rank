@@ -49,7 +49,7 @@ if ($number == 0 ) {
         for ($j = 0; $j < 12; $j++) {
             $name .= $characters[rand(0, strlen($characters) - 1)];
         }
-        $score = rand(0, $number * 1000);
+        $score = rand(0, $number * 100);
         $name = $mysqli->real_escape_string($name);
         $score = $mysqli->real_escape_string($score);
         $query = "INSERT INTO $table(" . $data_row . ",score) VALUES ('$name', '$score')";
@@ -119,7 +119,7 @@ function print_my_rank(RankingAlgorithmInterface $ranking_obj, $table, $data_row
     $names = array_map(function($arr) use (&$rank, $data_row, $row_score) {
         return ++$rank . '.' . $arr[ $data_row ] . ' : ' . $arr[ $row_score ];
     }, $ranking_obj->getRowsAtRank($rank, 11));
-    print '11 rows of ' . $table . ' starting at rank = ' . ($rank - 11) .
+    print count($names) . ' rows of ' . $table . ' starting at rank = ' . ($rank - count($names) + 1) .
         ' is :' . "\n" . implode("\n", $names) . "\n";
 }
 ?>

@@ -1,7 +1,7 @@
 <?php
 require_once 'SimpleRanking.php';
 /**
- * @author Ioannis Botis <ioannis.botis@interactivedata.com>
+ * @author Ioannis Botis
  * @date 30/8/2016
  * @version: AdvancedRanking.php 2:48 μμ
  * @since 30/8/2016
@@ -20,15 +20,18 @@ class AdvancedRanking extends SimpleRanking
         }
         $column = self::$mysqli_connection->real_escape_string($column);
         $value = self::$mysqli_connection->real_escape_string($value);
-        $query = "SELECT count(*) as rank" .
+        $query = "SELECT count(*) as rank,@score" .
             " FROM {$this->table_name} WHERE {$this->row_score} > " .
-            "( SELECT {$this->row_score} FROM {$this->table_name} WHERE `" . $column . "` = ? ) AND " . $this->_additional_where;
+            "@score:=( SELECT {$this->row_score} FROM {$this->table_name} WHERE `" . $column . "` = ? ) AND " . $this->_additional_where;
 
         if( $stmt = self::$mysqli_connection->prepare($query) ) {
             $stmt->bind_param("s", $value);
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
+            if( !$row['@score'] ) {
+                throw new Exception('Row does not exist.');
+            }
             return $row['rank'] + 1;
         }
         else {
