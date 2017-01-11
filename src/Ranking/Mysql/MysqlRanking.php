@@ -1,6 +1,9 @@
 <?php
 
-include 'RankingAlgorithmInterface.php';
+namespace Ranking\Mysql;
+
+use Ranking\AlgorithmInterface;
+use Ranking\RankInterface;
 
 /**
  * SimpleRanking is simple way to rank a table based on a score row of that
@@ -8,7 +11,7 @@ include 'RankingAlgorithmInterface.php';
  *
  * @author Ioannis Botis
  */
-class SimpleRanking implements RankingAlgorithmInterface {
+class MysqlRanking implements AlgorithmInterface {
 
     protected $table_name;
     protected $row_score;
@@ -33,9 +36,10 @@ class SimpleRanking implements RankingAlgorithmInterface {
         self::$mysqli_connection = $mysqli_connection;
     }
 
-    public function getRank($column, $value) {
-        $column = self::$mysqli_connection->real_escape_string($column);
-        $value = self::$mysqli_connection->real_escape_string($value);
+    public function getRank(RankInterface $rankModel) {
+
+        $score = $rankModel->getScore();
+
         $query = "SELECT count(*) as rank,@score" .
                 " FROM {$this->table_name} WHERE {$this->row_score} > " .
                 "@score:=( SELECT {$this->row_score} FROM {$this->table_name} WHERE `" . $column . "` = ? )";
