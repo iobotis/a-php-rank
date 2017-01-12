@@ -17,7 +17,7 @@ class AdvancedRanking extends SimpleRanking
 
     public function excludeByColumn($column, $value, $op = '=')
     {
-        $this->_additional_where = "`$column` " . $op . " '" . self::$mysqli_connection->real_escape_string($value) . "'";
+        $this->_additional_where = "`$column` " . $op . " '" . $this->getMySqlConnection()->real_escape_string($value) . "'";
     }
 
     public function getRank(RankInterface $rankModel)
@@ -29,9 +29,9 @@ class AdvancedRanking extends SimpleRanking
             " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel) .
             " AND " . $this->_additional_where;
 
-        $res = self::$mysqli_connection->query($query);
+        $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
-            throw new Exception("Query rows failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+            throw new Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
         $row = $res->fetch_assoc();
         return $row['rank'] + 1;
@@ -42,16 +42,16 @@ class AdvancedRanking extends SimpleRanking
         if (!isset($this->_additional_where)) {
             return parent::getRowsAtRank($rank, $total);
         }
-        $rank = intval(self::$mysqli_connection->real_escape_string($rank));
-        $total = intval(self::$mysqli_connection->real_escape_string($total));
+        $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
+        $total = intval($this->getMySqlConnection()->real_escape_string($total));
         $query = "SELECT * " .
             "FROM `{$this->table_name}` " .
             "WHERE " . $this->_additional_where . " " .
             "ORDER BY {$this->row_score} DESC " .
             "LIMIT $rank, $total";
-        $res = self::$mysqli_connection->query($query);
+        $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
-            throw new Exception("Query rows failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+            throw new Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
         if ($res->num_rows === 0) {
             return array();
