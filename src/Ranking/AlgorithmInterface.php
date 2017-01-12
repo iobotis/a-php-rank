@@ -26,24 +26,24 @@ interface AlgorithmInterface
 
     /**
      * Find the rank of a specific row.
-     * @param RankInterface $rankModel the value the column has.
+     * @param ModelInterface $rankModel the value the column has.
      * @return int the rank of the row.
      */
-    public function getRank(RankInterface $rankModel);
+    public function getRank(ModelInterface $rankModel);
 
     /**
      * Find the rows at a specific rank.
      * @param int $rank
      * @param int $total
-     * @return RankInterface[]
+     * @return ModelInterface[]
      */
     public function getRowsAtRank($rank, $total = 1);
 
     /**
-     * @param RankInterface $rankModel
+     * @param ModelInterface $rankModel
      * @return mixed
      */
-    public function getScore(RankInterface $rankModel);
+    public function getScore(ModelInterface $rankModel);
 }
 
 ?>

@@ -9,16 +9,16 @@
 namespace Ranking;
 
 /**
- * Interface RankInterface
+ * Interface ModelInterface
  * This represents an object that is ranked.
  *
  * @package Ranking
  */
-interface RankInterface
+interface ModelInterface
 {
 
     /**
-     * RankInterface constructor.
+     * ModelInterface constructor.
      * This functions as a service to calculate the score.
      *
      * @param AlgorithmInterface $ranking

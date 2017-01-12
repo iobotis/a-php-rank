@@ -3,7 +3,7 @@
 namespace Ranking\Mysql;
 
 use Ranking\AlgorithmInterface;
-use Ranking\RankInterface;
+use Ranking\ModelInterface;
 
 /**
  * SimpleRanking is simple way to rank a table based on a score row of that
@@ -52,7 +52,7 @@ class SimpleRanking implements AlgorithmInterface
         return $this->mysqli_connection;
     }
 
-    public function getRank(RankInterface $rankModel)
+    public function getRank(ModelInterface $rankModel)
     {
         // if rank row is supplied use it to get the rank.
         if (!empty($this->rank_row)) {
@@ -105,12 +105,14 @@ class SimpleRanking implements AlgorithmInterface
         }
         $rows = array();
         while ($row = $res->fetch_assoc()) {
-            $rows[] = $row;
+            $mysqlRow = new Object($this);
+            $mysqlRow->setAttributes($row);
+            $rows[] = $mysqlRow;
         }
         return $rows;
     }
 
-    public function getScore(RankInterface $rankModel)
+    public function getScore(ModelInterface $rankModel)
     {
         $attributes = $rankModel->getAttributes();
 

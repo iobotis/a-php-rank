@@ -2,7 +2,7 @@
 
 namespace Ranking\Mysql;
 
-use Ranking\RankInterface;
+use Ranking\ModelInterface;
 use Ranking\Mysql\SimpleRanking;
 
 /**
@@ -21,7 +21,7 @@ class AdvancedRanking extends SimpleRanking
         $this->_condition = "`$column` " . $op . " '" . $this->getMySqlConnection()->real_escape_string($value) . "'";
     }
 
-    public function getRank(RankInterface $rankModel)
+    public function getRank(ModelInterface $rankModel)
     {
         if (!isset($this->_condition)) {
             return parent::getRank($rankModel);
@@ -59,7 +59,9 @@ class AdvancedRanking extends SimpleRanking
         }
         $rows = array();
         while ($row = $res->fetch_assoc()) {
-            $rows[] = $row;
+            $mysqlRow = new Object($this);
+            $mysqlRow->setAttributes($row);
+            $rows[] = $mysqlRow;
         }
         return $rows;
     }
