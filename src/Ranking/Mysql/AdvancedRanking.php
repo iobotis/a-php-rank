@@ -3,7 +3,7 @@ require_once 'SimpleRanking.php';
 /**
  * @author Ioannis Botis
  * @date 30/8/2016
- * @version: AdvancedRanking.php 2:48 μμ
+ * @version: AdvancedRanking.php 2:48 pm
  * @since 30/8/2016
  */
 class AdvancedRanking extends SimpleRanking

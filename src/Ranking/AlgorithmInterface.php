@@ -1,11 +1,13 @@
 <?php
 
+namespace Ranking;
 /**
  * We define an interface to the way to get information
  * about the ranking of the records we have.
  * @author Ioannis Botis
  */
-interface RankingAlgorithmInterface {
+interface AlgorithmInterface
+{
 
     /**
      * Depending on the algorithm used for ranking, maybe the ranking is not
@@ -22,16 +24,16 @@ interface RankingAlgorithmInterface {
 
     /**
      * Find the rank of a specific row.
-     * @param RankModel $rankModel the value the column has.
+     * @param RankInterface $rankModel the value the column has.
      * @return int the rank of the row.
      */
-    public function getRank(RankModel $rankModel);
+    public function getRank(RankInterface $rankModel);
 
     /**
      * Find the rows at a specific rank.
      * @param int $rank
      * @param int $total
-     * @return RankModel[]
+     * @return RankInterface[]
      */
     public function getRowsAtRank($rank, $total = 1);
 }
