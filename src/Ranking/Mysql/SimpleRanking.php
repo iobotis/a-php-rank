@@ -11,7 +11,7 @@ use Ranking\RankInterface;
  *
  * @author Ioannis Botis
  */
-class MysqlRanking implements AlgorithmInterface
+class SimpleRanking implements AlgorithmInterface
 {
 
     protected $table_name;
@@ -41,24 +41,15 @@ class MysqlRanking implements AlgorithmInterface
 
     public function getRank(RankInterface $rankModel)
     {
-        $attributes = $rankModel->getAttributes();
-
         $query = "SELECT count(*) as rank,@score" .
-            " FROM {$this->table_name} WHERE {$this->row_score} > " .
-            "@score:=" . $this->getScoreSQL($rankModel);
+            " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
 
-        if ($stmt = self::$mysqli_connection->prepare($query)) {
-            $stmt->bind_param("s", $attributes['name']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $row = $result->fetch_assoc();
-            if (!$row['@score']) {
-                throw new Exception('Row does not exist.');
-            }
-            return (int)($row['rank'] + 1);
-        } else {
-            throw new Exception("Query failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+        $res = self::$mysqli_connection->query($query);
+        if (!$res) {
+            throw new Exception("Query rows failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
+        $row = $res->fetch_assoc();
+        return $row['rank'] + 1;
     }
 
     protected function getScoreSQL($rankModel)
@@ -127,11 +118,6 @@ class MysqlRanking implements AlgorithmInterface
             throw new Exception("Rank update failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
         }
         return true;
-    }
-
-    public function __destruct()
-    {
-        self::$mysqli_connection->close();
     }
 
 }
