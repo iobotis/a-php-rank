@@ -42,7 +42,7 @@ class SimpleRanking implements AlgorithmInterface
     public function setMySqlConnection($mysqli_connection)
     {
         if (!is_a($mysqli_connection, 'mysqli') || $mysqli_connection->connect_errno) {
-            throw new Exception("Failed to connect to MySQL: (" . $mysqli_connection->connect_errno . ") " . $mysqli_connection->connect_error);
+            throw new \Exception("Failed to connect to MySQL: (" . $mysqli_connection->connect_errno . ") " . $mysqli_connection->connect_error);
         }
         $this->mysqli_connection = $mysqli_connection;
     }
@@ -54,33 +54,51 @@ class SimpleRanking implements AlgorithmInterface
 
     public function getRank(RankInterface $rankModel)
     {
-        $query = "SELECT count(*) as rank,@score" .
-            " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
-
-        $res = $this->getMySqlConnection()->query($query);
-        if (!$res) {
-            throw new Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+        // if rank row is supplied use it to get the rank.
+        if (!empty($this->rank_row)) {
+            $query = "SELECT {$this->rank_row} FROM {$this->table_name} WHERE `name` = ? ";
+            $attributes = $rankModel->getAttributes();
+            if ($stmt = $this->getMySqlConnection()->prepare($query)) {
+                $stmt->bind_param("s", $attributes['name']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+                // if rank is NULL, then continue try to get it with a count.
+                if ($row['rank'] > 0) {
+                    return $row['rank'];
+                }
+            } else {
+                throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            }
+        } else {
+            $query = "SELECT count(*) as rank" .
+                " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
+            $result = $this->getMySqlConnection()->query($query);
         }
-        $row = $res->fetch_assoc();
-        return $row['rank'] + 1;
-    }
 
-    protected function getScoreSQL($rankModel)
-    {
-        return "( SELECT score FROM users WHERE `name` = ? )";
+        if (!$result) {
+            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+        }
+        $row = $result->fetch_assoc();
+        return $row['rank'] + 1;
     }
 
     public function getRowsAtRank($rank, $total = 1)
     {
         $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
+
+        $order_by = $this->row_score;
+        if (!empty($this->rank_row)) {
+            $order_by = $this->rank_row;
+        }
         $query = "SELECT * " .
             "FROM `{$this->table_name}` " .
-            "ORDER BY {$this->row_score} DESC " .
+            "ORDER BY {$order_by} DESC " .
             "LIMIT $rank, $total";
         $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
-            throw new Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
         if ($res->num_rows === 0) {
             return array();
@@ -104,16 +122,30 @@ class SimpleRanking implements AlgorithmInterface
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
             if (!$row['score']) {
-                throw new Exception('Row does not exist.');
+                throw new \Exception('Row does not exist.');
             }
             return (int)($row['score']);
         } else {
-            throw new Exception("Query failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            throw new \Exception("Query failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
     }
 
     public function isReady()
     {
+        if (!$this->rank_row) {
+            return true;
+        }
+
+        $query = "SELECT count(*) as notranked" .
+            " FROM {$this->table_name} WHERE {$this->rank_row} IS NULL";
+        $result = $this->getMySqlConnection()->query($query);
+        if (!$result) {
+            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+        }
+        $row = $result->fetch_assoc();
+        if ($row['notranked'] > 0) {
+            return false;
+        }
         return true;
     }
 
@@ -127,11 +159,11 @@ class SimpleRanking implements AlgorithmInterface
             " ORDER BY {$this->row_score} DESC;";
         $res = $this->getMySqlConnection()->query("SET @r=0; ");
         if (!$res) {
-            throw new Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
         $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
-            throw new Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
         return true;
     }

@@ -22,14 +22,18 @@ SQL;
 
 $res = $mysqli->query($sql);
 if (!$res) {
-    throw new Exception("Query rows failed: (" . $mysqli->errno . ") " . $mysqli->error);
+    throw new \Exception("Query rows failed: (" . $mysqli->errno . ") " . $mysqli->error);
 }
 $row = $res->fetch_assoc();
 $name = $row['name'];
 
 $total_time = microtime(true);
 try {
-    $simple_ranking = new SimpleRanking($mysqli, $table, $row_score);
+    $simple_ranking = new SimpleRanking($mysqli, $table, $row_score, $rank_row);
+
+    if (!$simple_ranking->isReady()) {
+        $simple_ranking->run();
+    }
     // get rank for the given value.
     print_my_rank($simple_ranking, $table, $data_row, $row_score, $name);
 } catch (Exception $e) {
@@ -41,7 +45,8 @@ $mysqli->close();
 
 echo "Took " . (microtime(true) - $total_time) . "s to complete\n";
 
-function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_score, $name) {
+function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_score, $name)
+{
 
     $column = new Column($ranking_obj);
 
@@ -56,11 +61,11 @@ function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_
     print 'Score is ' . $score . "\n\n";
     // List 5 rows before and 5 following the current rank.
     $rank -= 6;
-    if( $rank < 0 ) {
+    if ($rank < 0) {
         $rank = 0;
     }
-    $names = array_map(function($arr) use (&$rank, $data_row, $row_score) {
-        return ++$rank . ' : ' . $arr[ $data_row ] . ' : ' . $arr[ $row_score ];
+    $names = array_map(function ($arr) use (&$rank, $data_row, $row_score) {
+        return ++$rank . ' : ' . $arr[$data_row] . ' : ' . $arr[$row_score];
     }, $ranking_obj->getRowsAtRank($rank, 11));
     print count($names) . ' rows of ' . $table . ' starting at rank = ' . ($rank - count($names) + 1) .
         ' is :' . "\n";
