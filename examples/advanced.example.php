@@ -37,9 +37,11 @@ try {
 
     $advanced_ranking->excludeByColumn('name', $condition, 'LIKE');
 
-    if (!$advanced_ranking->isReady()) {
+    $advanced_ranking->altOrderByColumn('name', 'DESC');
+
+    //if (!$advanced_ranking->isReady()) {
         $advanced_ranking->run();
-    }
+    //}
 
     print "Only searching at names containing 's' \n";
     print_my_rank($advanced_ranking, $table, $data_row, $row_score, $name);
@@ -73,7 +75,7 @@ function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_
     }
     $names = array_map(function ($arr) use (&$rank, $data_row, $row_score) {
         return ++$rank . ' : ' . $arr[$data_row] . ' : ' . $arr[$row_score];
-    }, $ranking_obj->getRowsAtRank($rank, 11));
+    }, $ranking_obj->getRowsAtRank($rank, 100));
     print count($names) . ' rows of ' . $table . ' starting at rank = ' . ($rank - count($names) + 1) .
         ' is :' . "\n";
     print 'Rank        name       Score' . "\n";
