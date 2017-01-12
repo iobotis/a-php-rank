@@ -4,6 +4,8 @@ namespace Ranking;
 /**
  * We define an interface to the way to get information
  * about the ranking of the records we have.
+ * This is used as a service and defines our ranking algorith.
+ *
  * @author Ioannis Botis
  */
 interface AlgorithmInterface
@@ -36,6 +38,12 @@ interface AlgorithmInterface
      * @return RankInterface[]
      */
     public function getRowsAtRank($rank, $total = 1);
+
+    /**
+     * @param RankInterface $rankModel
+     * @return mixed
+     */
+    public function getScore(RankInterface $rankModel);
 }
 
 ?>
