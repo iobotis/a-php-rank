@@ -11,6 +11,12 @@ namespace Ranking\Mysql;
 use Ranking\AlgorithmInterface;
 use Ranking\RankInterface;
 
+/**
+ * Class Column
+ *
+ *
+ * @package Ranking\Mysql
+ */
 class Column implements RankInterface
 {
 
@@ -24,18 +30,23 @@ class Column implements RankInterface
 
     public function getScore()
     {
-        return 7; //return $this->ranking->getScore();
+        return $this->ranking->getScore($this);
     }
 
-    public function getId()
+    public function getRank()
     {
-        return $this->id;
+        return $this->ranking->getRank($this);
     }
 
     public function setAttributes(array $attributes)
     {
         $this->attributes = $attributes;
     }
+
+    /**
+     * Usually this is the column id.
+     * @return array
+     */
     public function getAttributes()
     {
         return $this->attributes;

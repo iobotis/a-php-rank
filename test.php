@@ -134,10 +134,13 @@ function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_
 
     $column->setAttributes(array('name' => $name));
 
-    $rank = $ranking_obj->getRank($column);
+    $rank = $column->getRank();
+
+    $score = $column->getScore();
 
     print 'Rank of ' . $table . ' row with ' . $data_row . ' = ' . $name .
         ' is : ' . $rank . "\n";
+    print 'Score is ' . $score . "\n\n";
     // List 5 rows before and 5 following the current rank.
     $rank -= 6;
     if( $rank < 0 ) {

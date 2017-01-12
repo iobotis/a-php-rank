@@ -88,6 +88,26 @@ class MysqlRanking implements AlgorithmInterface
         return $rows;
     }
 
+    public function getScore(RankInterface $rankModel)
+    {
+        $attributes = $rankModel->getAttributes();
+
+        $query = "SELECT score FROM users WHERE `name` = ?";
+
+        if ($stmt = self::$mysqli_connection->prepare($query)) {
+            $stmt->bind_param("s", $attributes['name']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            if (!$row['score']) {
+                throw new Exception('Row does not exist.');
+            }
+            return (int)($row['score']);
+        } else {
+            throw new Exception("Query failed: (" . self::$mysqli_connection->errno . ") " . self::$mysqli_connection->error);
+        }
+    }
+
     public function isReady()
     {
         return true;
