@@ -21,7 +21,12 @@ class AdvancedRanking extends SimpleRanking
         $this->_condition = "`$column` " . $op . " '" . $this->getMySqlConnection()->real_escape_string($value) . "'";
     }
 
-    public function getRank(ModelInterface $rankModel)
+    public function altOrderByColumn($column, $op = 'ASC')
+    {
+        $this->_secondary_order = "$column " . $op;
+    }
+
+    public function getRank(RankInterface $rankModel)
     {
         if (!isset($this->_condition)) {
             return parent::getRank($rankModel);
@@ -45,10 +50,14 @@ class AdvancedRanking extends SimpleRanking
         }
         $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
+        $order_by = $this->row_score;
+        if (!empty($this->rank_row)) {
+            $order_by = $this->rank_row;
+        }
         $query = "SELECT * " .
             "FROM `{$this->table_name}` " .
             "WHERE " . $this->_condition . " " .
-            "ORDER BY {$this->row_score} DESC " .
+            "ORDER BY {$order_by} DESC " .
             "LIMIT $rank, $total";
         $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
@@ -89,7 +98,7 @@ class AdvancedRanking extends SimpleRanking
     public function run()
     {
         // If no condition defined, use the simple method.
-        if (!isset($this->_condition)) {
+        if (!isset($this->_condition) && !isset($this->_secondary_order)) {
             return parent::run();
         }
 
@@ -97,10 +106,15 @@ class AdvancedRanking extends SimpleRanking
         if (!$this->rank_row) {
             return true;
         }
+        $secondary_order = "";
+        if (isset($this->_secondary_order)) {
+            $secondary_order = "," . $this->_secondary_order;
+        }
         // Lets update the rank column based on the score value.
         $query = "UPDATE {$this->table_name} SET {$this->rank_row} = @r:= (@r+1)"
             . " WHERE " . $this->_condition .
-            " ORDER BY {$this->row_score} DESC;";
+            " ORDER BY {$this->row_score} DESC" . $secondary_order . ";";
+
         $res = $this->getMySqlConnection()->query("SET @r=0; ");
         if (!$res) {
             throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
