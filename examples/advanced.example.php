@@ -30,8 +30,8 @@ $name = $row['name'];
 
 $total_time = microtime(true);
 try {
-    AdvancedRanking::setMySqlConnection($mysqli);
-    $advanced_ranking = new AdvancedRanking($table, $row_score, $rank_row);
+    $advanced_ranking = new AdvancedRanking($mysqli, $table, $row_score);
+
     print "Only searching at names containing 's' \n";
     $advanced_ranking->excludeByColumn( 'name' , '%s%', 'LIKE' );
     print_my_rank($advanced_ranking, $table, $data_row, $row_score, $name);

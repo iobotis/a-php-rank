@@ -29,8 +29,7 @@ $name = $row['name'];
 
 $total_time = microtime(true);
 try {
-    SimpleRanking::setMySqlConnection($mysqli);
-    $simple_ranking = new SimpleRanking($table, $row_score, $rank_row);
+    $simple_ranking = new SimpleRanking($mysqli, $table, $row_score);
     // get rank for the given value.
     print_my_rank($simple_ranking, $table, $data_row, $row_score, $name);
 } catch (Exception $e) {
