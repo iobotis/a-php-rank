@@ -41,13 +41,14 @@ class MysqlRanking implements AlgorithmInterface
 
     public function getRank(RankInterface $rankModel)
     {
+        $attributes = $rankModel->getAttributes();
 
         $query = "SELECT count(*) as rank,@score" .
             " FROM {$this->table_name} WHERE {$this->row_score} > " .
             "@score:=" . $this->getScoreSQL($rankModel);
 
         if ($stmt = self::$mysqli_connection->prepare($query)) {
-            $stmt->bind_param("s", $rankModel->name);
+            $stmt->bind_param("s", $attributes['name']);
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
