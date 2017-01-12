@@ -2,7 +2,7 @@
 
 namespace Ranking\Mysql;
 
-use Ranking\RankInterface;
+use Ranking\ModelInterface;
 use Ranking\Mysql\SimpleRanking;
 
 /**
@@ -68,7 +68,9 @@ class AdvancedRanking extends SimpleRanking
         }
         $rows = array();
         while ($row = $res->fetch_assoc()) {
-            $rows[] = $row;
+            $mysqlRow = new Object($this);
+            $mysqlRow->setAttributes($row);
+            $rows[] = $mysqlRow;
         }
         return $rows;
     }

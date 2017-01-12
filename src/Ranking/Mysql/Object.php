@@ -2,22 +2,22 @@
 /**
  * @author Ioannis Botis
  * @date 11/1/2017
- * @version: Column.php 6:06 pm
+ * @version: Object.php 6:06 pm
  * @since 11/1/2017
  */
 
 namespace Ranking\Mysql;
 
 use Ranking\AlgorithmInterface;
-use Ranking\RankInterface;
+use Ranking\ModelInterface;
 
 /**
- * Class Column
- *
+ * Class Object
+ * This usually is a mysql row or view.
  *
  * @package Ranking\Mysql
  */
-class Column implements RankInterface
+class Object implements ModelInterface
 {
 
     protected $attributes = array();
@@ -45,6 +45,7 @@ class Column implements RankInterface
 
     /**
      * Usually this is the column id.
+     *
      * @return array
      */
     public function getAttributes()

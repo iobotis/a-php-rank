@@ -10,7 +10,7 @@ require_once 'settings.php';
 
 use Ranking\AlgorithmInterface;
 use Ranking\Mysql\AdvancedRanking;
-use Ranking\Mysql\Column;
+use Ranking\Mysql\Object;
 
 $condition = '%s%';
 // Select a random name to search for.
@@ -57,13 +57,13 @@ echo "Took " . (microtime(true) - $total_time) . "s to complete\n";
 function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_score, $name)
 {
 
-    $column = new Column($ranking_obj);
+    $object = new Object($ranking_obj);
 
-    $column->setAttributes(array('name' => $name));
+    $object->setAttributes(array('name' => $name));
 
-    $rank = $column->getRank();
+    $rank = $object->getRank();
 
-    $score = $column->getScore();
+    $score = $object->getScore();
 
     print 'Rank of ' . $table . ' row with ' . $data_row . ' = ' . $name .
         ' is : ' . $rank . "\n";
@@ -73,7 +73,8 @@ function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_
     if ($rank < 0) {
         $rank = 0;
     }
-    $names = array_map(function ($arr) use (&$rank, $data_row, $row_score) {
+    $names = array_map(function ($model) use (&$rank, $data_row, $row_score) {
+        $arr = $model->getAttributes();
         return ++$rank . ' : ' . $arr[$data_row] . ' : ' . $arr[$row_score];
     }, $ranking_obj->getRowsAtRank($rank, 100));
     print count($names) . ' rows of ' . $table . ' starting at rank = ' . ($rank - count($names) + 1) .
