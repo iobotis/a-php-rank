@@ -39,9 +39,9 @@ try {
 
     $advanced_ranking->altOrderByColumn('name', 'DESC');
 
-    //if (!$advanced_ranking->isReady()) {
+    if (!$advanced_ranking->isReady()) {
         $advanced_ranking->run();
-    //}
+    }
 
     print "Only searching at names containing 's' \n";
     print_my_rank($advanced_ranking, $table, $data_row, $row_score, $name);

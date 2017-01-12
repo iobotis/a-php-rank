@@ -50,10 +50,14 @@ class AdvancedRanking extends SimpleRanking
         }
         $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
+        $order_by = $this->row_score;
+        if (!empty($this->rank_row)) {
+            $order_by = $this->rank_row;
+        }
         $query = "SELECT * " .
             "FROM `{$this->table_name}` " .
             "WHERE " . $this->_condition . " " .
-            "ORDER BY {$this->row_score} DESC " .
+            "ORDER BY {$order_by} DESC " .
             "LIMIT $rank, $total";
         $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
@@ -109,7 +113,6 @@ class AdvancedRanking extends SimpleRanking
             . " WHERE " . $this->_condition .
             " ORDER BY {$this->row_score} DESC" . $secondary_order . ";";
 
-        var_dump($query);
         $res = $this->getMySqlConnection()->query("SET @r=0; ");
         if (!$res) {
             throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
