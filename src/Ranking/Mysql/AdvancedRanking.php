@@ -26,7 +26,7 @@ class AdvancedRanking extends SimpleRanking
         $this->_secondary_order = "$column " . $op;
     }
 
-    public function getRank(RankInterface $rankModel)
+    public function getRank(ModelInterface $rankModel)
     {
         if (!isset($this->_condition)) {
             return parent::getRank($rankModel);
@@ -51,13 +51,16 @@ class AdvancedRanking extends SimpleRanking
         $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
         $order_by = $this->row_score;
+        $secondary_order = "";
         if (!empty($this->rank_row)) {
             $order_by = $this->rank_row;
+        } elseif (isset($this->_secondary_order)) {
+            $secondary_order = "," . $this->_secondary_order . " ";
         }
         $query = "SELECT * " .
             "FROM `{$this->table_name}` " .
             "WHERE " . $this->_condition . " " .
-            "ORDER BY {$order_by} DESC " .
+            "ORDER BY {$order_by} DESC " . $secondary_order .
             "LIMIT $rank, $total";
         $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
