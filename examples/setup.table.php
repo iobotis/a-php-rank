@@ -11,7 +11,9 @@ require_once 'settings.php';
 $query = "CREATE TABLE IF NOT EXISTS `" . $table . "` (" .
     "`" . $data_row . "` varchar(120)," .
     "`" . $rank_row . "` int(10) unsigned," .
-    "`" . $row_score . "` int(10) unsigned);";
+    "`" . $row_score . "` int(10) unsigned," .
+    "`group_rank` int(10) unsigned);";
+var_dump($query);
 if (!$mysqli->query($query)) {
     echo "Table creation failed: (" . $mysqli->errno . ") " . $mysqli->error;
 }
