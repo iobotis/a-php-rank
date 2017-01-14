@@ -36,7 +36,7 @@ try {
     // select only names that contain "s".
     $advanced_ranking->excludeByColumn('name', $condition, 'LIKE');
 
-    $advanced_ranking->altOrderByColumn('name', 'DESC');
+    $advanced_ranking->addAltOrderByColumn('name', 'DESC');
 
     if (!$advanced_ranking->isReady()) {
         $advanced_ranking->run();

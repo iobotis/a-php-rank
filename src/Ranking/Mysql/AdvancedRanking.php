@@ -37,7 +37,7 @@ class AdvancedRanking extends SimpleRanking
      * @param string $column
      * @param string $op
      */
-    public function altOrderByColumn($column, $op = 'ASC')
+    public function addAltOrderByColumn($column, $op = 'ASC')
     {
         $this->_secondary_order[] = array(
             'column' => $column,
@@ -51,10 +51,9 @@ class AdvancedRanking extends SimpleRanking
             return parent::getRank($rankModel);
         }
         $score = $this->getScore($rankModel);
-        
+
         $query = "SELECT count(*) as rank" .
             " FROM {$this->table_name} WHERE {$this->row_score} > " . $score .
-            //" AND {$this->_secondary_order}" .
             " AND " . $this->_condition;
 
         $res = $this->getMySqlConnection()->query($query);
