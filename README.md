@@ -11,6 +11,8 @@ Ranking Mysql row
 To rank a mysql row, the best way is to provide a score for it and let the algorithm
 rank the row based on that score. Though, sometimes it is not possible to have a score row,
 e.g when you have a lot of different groups of rows to rank and score can be different based on the group selected.
+At the current version, a score column defined is mandatory.
+Moreover, defining and using a rank column gives the best performance, but this is not required.
 
 Group ranking
 -------------
