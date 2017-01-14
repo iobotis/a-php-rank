@@ -36,4 +36,5 @@ $table = 'users';
 $data_row = 'name';
 $rank_row = 'rank';
 $row_score = 'score';
+$group_rank = 'group_rank';
 
