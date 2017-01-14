@@ -17,7 +17,7 @@ use Ranking\Mysql\SimpleRanking;
 class AdvancedRanking extends SimpleRanking
 {
     private $_condition;
-    private $_secondary_order;
+    private $_secondary_order = array();
 
     /**
      * Set a condition for a specific column.
@@ -39,16 +39,22 @@ class AdvancedRanking extends SimpleRanking
      */
     public function altOrderByColumn($column, $op = 'ASC')
     {
-        $this->_secondary_order = "$column " . $op;
+        $this->_secondary_order[] = array(
+            'column' => $column,
+            'order' => $op
+        );
     }
 
     public function getRank(ModelInterface $rankModel)
     {
-        if (!isset($this->_condition)) {
+        if (!isset($this->_condition) && empty($this->_secondary_order)) {
             return parent::getRank($rankModel);
         }
+        $score = $this->getScore($rankModel);
+        
         $query = "SELECT count(*) as rank" .
-            " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel) .
+            " FROM {$this->table_name} WHERE {$this->row_score} > " . $score .
+            //" AND {$this->_secondary_order}" .
             " AND " . $this->_condition;
 
         $res = $this->getMySqlConnection()->query($query);
@@ -56,7 +62,30 @@ class AdvancedRanking extends SimpleRanking
             throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
         $row = $res->fetch_assoc();
-        return $row['rank'] + 1;
+        $num_of_greater_score = $row['rank'];
+
+        $attributes = $rankModel->getAttributes();
+
+        $order_statement = array_map(function ($order) use (&$attributes) {
+            $op = '<';
+            if($order['order'] == 'ASC') {
+                $op = '>';
+            }
+            return  $order["column"] . " $op '" . $attributes[$order["column"]] . "'";
+        }, $this->_secondary_order);
+        $secondary_order = implode(" AND ", $order_statement) . " ";
+
+        $query = "SELECT count(*) as rank" .
+            " FROM {$this->table_name} WHERE {$this->row_score} = " . $score .
+            " AND $secondary_order" .
+            " AND " . $this->_condition;
+
+        $res = $this->getMySqlConnection()->query($query);
+        if (!$res) {
+            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+        }
+        $row = $res->fetch_assoc();
+        return $num_of_greater_score + $row['rank'] + 1;
     }
 
     public function getRowsAtRank($rank, $total = 1)
@@ -70,8 +99,11 @@ class AdvancedRanking extends SimpleRanking
         $secondary_order = "";
         if (!empty($this->rank_row)) {
             $order_by = $this->rank_row;
-        } elseif (isset($this->_secondary_order)) {
-            $secondary_order = "," . $this->_secondary_order . " ";
+        } elseif (!empty($this->_secondary_order)) {
+            $order_statement = array_map(function ($order) {
+                return  $order["column"] . ' ' . $order['order'];
+            }, $this->_secondary_order);
+            $secondary_order = "," . implode(",", $order_statement) . " ";
         }
         $query = "SELECT * " .
             "FROM `{$this->table_name}` " .
@@ -117,7 +149,7 @@ class AdvancedRanking extends SimpleRanking
     public function run()
     {
         // If no condition defined, use the simple method.
-        if (!isset($this->_condition) && !isset($this->_secondary_order)) {
+        if (!isset($this->_condition) && empty($this->_secondary_order)) {
             return parent::run();
         }
 
@@ -126,8 +158,11 @@ class AdvancedRanking extends SimpleRanking
             return true;
         }
         $secondary_order = "";
-        if (isset($this->_secondary_order)) {
-            $secondary_order = "," . $this->_secondary_order;
+        if (!empty($this->_secondary_order)) {
+            $order_statement = array_map(function ($order) {
+                return  $order["column"] . ' ' . $order['order'];
+            }, $this->_secondary_order);
+            $secondary_order = "," . implode(",", $order_statement);
         }
         // Lets update the rank column based on the score value.
         $query = "UPDATE {$this->table_name} SET {$this->rank_row} = @r:= (@r+1)"
