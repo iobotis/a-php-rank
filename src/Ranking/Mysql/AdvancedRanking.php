@@ -6,6 +6,9 @@ use Ranking\ModelInterface;
 use Ranking\Mysql\SimpleRanking;
 
 /**
+ * Advanced ranking is the same as Simple ranking with an optional condition and an optional seconndary order.
+ * This way you can rank mysql rows by group.
+ *
  * @author Ioannis Botis
  * @date 30/8/2016
  * @version: AdvancedRanking.php 2:48 pm
@@ -16,11 +19,24 @@ class AdvancedRanking extends SimpleRanking
     private $_condition;
     private $_secondary_order;
 
+    /**
+     * Set a condition for a specific column.
+     *
+     * @param string $column the column name.
+     * @param string $value column condition value.
+     * @param string $op mysql condition operator(= > < LIKE etc).
+     */
     public function excludeByColumn($column, $value, $op = '=')
     {
         $this->_condition = "`$column` " . $op . " '" . $this->getMySqlConnection()->real_escape_string($value) . "'";
     }
 
+    /**
+     * Set an alternative order in case 2 rows have the same score.
+     * 
+     * @param string $column
+     * @param string $op
+     */
     public function altOrderByColumn($column, $op = 'ASC')
     {
         $this->_secondary_order = "$column " . $op;

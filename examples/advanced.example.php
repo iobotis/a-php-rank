@@ -29,12 +29,11 @@ if (!$res) {
 $row = $res->fetch_assoc();
 $name = $row['name'];
 
-$rank_row = 'group_rank';
-
 $total_time = microtime(true);
 try {
-    $advanced_ranking = new AdvancedRanking($mysqli, $table, $row_score, $rank_row);
+    $advanced_ranking = new AdvancedRanking($mysqli, $table, $row_score, $group_rank);
 
+    // select only names that contain "s".
     $advanced_ranking->excludeByColumn('name', $condition, 'LIKE');
 
     $advanced_ranking->altOrderByColumn('name', 'DESC');
