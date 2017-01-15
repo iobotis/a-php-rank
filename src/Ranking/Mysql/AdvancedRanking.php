@@ -47,6 +47,10 @@ class AdvancedRanking extends SimpleRanking
 
     public function getRank(ModelInterface $rankModel)
     {
+        // if rank row is supplied use it to get the rank.
+        if (!empty($this->rank_row)) {
+            return parent::getRank($rankModel);
+        }
         if (!isset($this->_condition) && empty($this->_secondary_order)) {
             return parent::getRank($rankModel);
         }
@@ -67,7 +71,7 @@ class AdvancedRanking extends SimpleRanking
 
         $order_statement = array_map(function ($order) use (&$attributes) {
             $op = '<';
-            if($order['order'] == 'ASC') {
+            if($order['order'] == 'DESC') {
                 $op = '>';
             }
             return  $order["column"] . " $op '" . $attributes[$order["column"]] . "'";
@@ -89,9 +93,15 @@ class AdvancedRanking extends SimpleRanking
 
     public function getRowsAtRank($rank, $total = 1)
     {
-        if (!isset($this->_condition)) {
+        // if rank row is supplied use it to get the rank.
+        if (!empty($this->rank_row)) {
             return parent::getRowsAtRank($rank, $total);
         }
+
+        if (!isset($this->_condition) && empty($this->_secondary_order)) {
+            return parent::getRowsAtRank($rank, $total);
+        }
+
         $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
         $order_by = $this->row_score;

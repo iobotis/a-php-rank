@@ -64,17 +64,16 @@ class SimpleRanking implements AlgorithmInterface
                 $result = $stmt->get_result();
                 $row = $result->fetch_assoc();
                 // if rank is NULL, then continue try to get it with a count.
-                if ($row['rank'] > 0) {
-                    return $row['rank'];
+                if ($row[$this->rank_row] > 0) {
+                    return $row[$this->rank_row];
                 }
             } else {
                 throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
             }
-        } else {
-            $query = "SELECT count(*) as rank" .
-                " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
-            $result = $this->getMySqlConnection()->query($query);
         }
+        $query = "SELECT count(*) as rank" .
+            " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
+        $result = $this->getMySqlConnection()->query($query);
 
         if (!$result) {
             throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
