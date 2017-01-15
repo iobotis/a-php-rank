@@ -128,10 +128,20 @@ class SimpleRanking implements AlgorithmInterface
     {
         $attributes = $rankModel->getAttributes();
 
-        $query = "SELECT score FROM users WHERE `name` = ?";
+        $query = "SELECT {$this->row_score} FROM {$this->table_name} WHERE `name` = ?";
+
+        $condition = implode(' AND ', array_map(
+            function ($v, $k) {
+                return "`$k`" . '= ?' . $v;
+            },
+            $attributes,
+            array_keys($attributes)
+        ));
+        var_dump($condition);
 
         if ($stmt = $this->getMySqlConnection()->prepare($query)) {
-            $stmt->bind_param("s", $attributes['name']);
+            //$stmt->bind_param("s", $attributes['name']);
+            call_user_func_array( array($stmt, 'bind_param'), array('s', array_values($attributes)));
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
