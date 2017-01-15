@@ -18,6 +18,7 @@ class SimpleRanking implements AlgorithmInterface
     protected $row_score;
     protected $rank_row;
     protected $mysqli_connection;
+    private $_use_between_condition = false;
 
     /**
      * SimpleRanking constructor.
@@ -52,6 +53,11 @@ class SimpleRanking implements AlgorithmInterface
         return $this->mysqli_connection;
     }
 
+    public function useBetweenCondition()
+    {
+        $this->_use_between_condition = true;
+    }
+
     public function getRank(ModelInterface $rankModel)
     {
         // if rank row is supplied use it to get the rank.
@@ -64,17 +70,16 @@ class SimpleRanking implements AlgorithmInterface
                 $result = $stmt->get_result();
                 $row = $result->fetch_assoc();
                 // if rank is NULL, then continue try to get it with a count.
-                if ($row['rank'] > 0) {
-                    return $row['rank'];
+                if ($row[$this->rank_row] > 0) {
+                    return $row[$this->rank_row];
                 }
             } else {
                 throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
             }
-        } else {
-            $query = "SELECT count(*) as rank" .
-                " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
-            $result = $this->getMySqlConnection()->query($query);
         }
+        $query = "SELECT count(*) as rank" .
+            " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
+        $result = $this->getMySqlConnection()->query($query);
 
         if (!$result) {
             throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
@@ -89,13 +94,20 @@ class SimpleRanking implements AlgorithmInterface
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
 
         $order_by = $this->row_score;
-        if (!empty($this->rank_row)) {
+        if (!empty($this->rank_row) && $this->_use_between_condition) {
             $order_by = $this->rank_row;
+            $lastrank = $rank + $total;
+            $query = "SELECT * " .
+                "FROM `{$this->table_name}` " .
+                "WHERE {$order_by} BETWEEN $rank AND $lastrank " .
+                "ORDER BY {$order_by} DESC ";
+        } else {
+            $query = "SELECT * " .
+                "FROM `{$this->table_name}` " .
+                "ORDER BY {$order_by} DESC " .
+                "LIMIT $rank, $total";
         }
-        $query = "SELECT * " .
-            "FROM `{$this->table_name}` " .
-            "ORDER BY {$order_by} DESC " .
-            "LIMIT $rank, $total";
+
         $res = $this->getMySqlConnection()->query($query);
         if (!$res) {
             throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);

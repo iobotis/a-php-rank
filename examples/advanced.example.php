@@ -31,12 +31,12 @@ $name = $row['name'];
 
 $total_time = microtime(true);
 try {
-    $advanced_ranking = new AdvancedRanking($mysqli, $table, $row_score, $group_rank);
+    $advanced_ranking = new AdvancedRanking($mysqli, $table, $row_score);
 
     // select only names that contain "s".
     $advanced_ranking->excludeByColumn('name', $condition, 'LIKE');
 
-    $advanced_ranking->addAltOrderByColumn('name', 'DESC');
+    $advanced_ranking->addAltOrderByColumn('name');
 
     if (!$advanced_ranking->isReady()) {
         $advanced_ranking->run();
@@ -75,7 +75,7 @@ function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_
     $names = array_map(function ($model) use (&$rank, $data_row, $row_score) {
         $arr = $model->getAttributes();
         return ++$rank . ' : ' . $arr[$data_row] . ' : ' . $arr[$row_score];
-    }, $ranking_obj->getRowsAtRank($rank, 100));
+    }, $ranking_obj->getRowsAtRank($rank, 10));
     print count($names) . ' rows of ' . $table . ' starting at rank = ' . ($rank - count($names) + 1) .
         ' is :' . "\n";
     print 'Rank        name       Score' . "\n";
