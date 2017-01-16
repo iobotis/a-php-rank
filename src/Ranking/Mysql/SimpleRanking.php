@@ -22,9 +22,10 @@ class SimpleRanking implements AlgorithmInterface
 
     /**
      * SimpleRanking constructor.
+     *
      * @param $mysqli_connection
-     * @param string $table
-     * @param string $row_score
+     * @param string $table the table or view that we need to rank.
+     * @param string $row_score the column used to hold the score.
      * @param string $rank_row
      */
     public function __construct($mysqli_connection, $table, $row_score, $rank_row = null)
@@ -128,10 +129,24 @@ class SimpleRanking implements AlgorithmInterface
     {
         $attributes = $rankModel->getAttributes();
 
-        $query = "SELECT score FROM users WHERE `name` = ?";
+        $condition = implode(' AND ', array_map(
+            function ($k) {
+                return "`$k`" . '= ?';
+            },
+            array_keys($attributes)
+        ));
+
+        $query = "SELECT {$this->row_score} FROM {$this->table_name} WHERE " . $condition;
 
         if ($stmt = $this->getMySqlConnection()->prepare($query)) {
-            $stmt->bind_param("s", $attributes['name']);
+            //$stmt->bind_param("s", $attributes['name']);
+            call_user_func_array(
+                array($stmt, 'bind_param'),
+                array_merge(
+                    array(str_repeat('s', count($attributes))),
+                    $this->refValues($attributes)
+                )
+            );
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
@@ -142,6 +157,19 @@ class SimpleRanking implements AlgorithmInterface
         } else {
             throw new \Exception("Query failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
         }
+    }
+
+    protected function refValues($arr)
+    {
+        if (strnatcmp(phpversion(), '5.3') >= 0) //Reference is required for PHP 5.3+
+        {
+            $refs = array();
+            foreach ($arr as $key => $value) {
+                $refs[$key] = &$arr[$key];
+            }
+            return $refs;
+        }
+        return $arr;
     }
 
     public function isReady()
