@@ -8,7 +8,7 @@ namespace Ranking\PDO;
 
 use Ranking\AlgorithmInterface;
 use Ranking\ModelInterface;
-use Ranking\Mysql\Object;
+use Ranking\Object;
 
 class Simple implements AlgorithmInterface
 {

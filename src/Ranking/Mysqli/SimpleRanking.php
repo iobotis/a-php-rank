@@ -1,9 +1,10 @@
 <?php
 
-namespace Ranking\Mysql;
+namespace Ranking\Mysqli;
 
 use Ranking\AlgorithmInterface;
 use Ranking\ModelInterface;
+use Ranking\Object;
 
 /**
  * SimpleRanking is simple way to rank a table based on a score row of that
@@ -15,8 +16,8 @@ class SimpleRanking implements AlgorithmInterface
 {
 
     protected $table_name;
-    protected $row_score;
-    protected $rank_row;
+    protected $score_column;
+    protected $rank_column;
     protected $mysqli_connection;
     private $_use_between_condition = false;
 
@@ -25,14 +26,14 @@ class SimpleRanking implements AlgorithmInterface
      *
      * @param $mysqli_connection
      * @param string $table the table or view that we need to rank.
-     * @param string $row_score the column used to hold the score.
-     * @param string $rank_row
+     * @param string $score_column the column used to hold the score.
+     * @param string $rank_column
      */
-    public function __construct($mysqli_connection, $table, $row_score, $rank_row = null)
+    public function __construct($mysqli_connection, $table, $score_column, $rank_column = null)
     {
         $this->table_name = $table;
-        $this->rank_row = $rank_row;
-        $this->row_score = $row_score;
+        $this->rank_column = $rank_column;
+        $this->score_column = $score_column;
         $this->setMySqlConnection($mysqli_connection);
     }
 
@@ -62,8 +63,8 @@ class SimpleRanking implements AlgorithmInterface
     public function getRank(ModelInterface $rankModel)
     {
         // if rank row is supplied use it to get the rank.
-        if (!empty($this->rank_row)) {
-            $query = "SELECT {$this->rank_row} FROM {$this->table_name} WHERE `name` = ? ";
+        if (!empty($this->rank_column)) {
+            $query = "SELECT {$this->rank_column} FROM {$this->table_name} WHERE `name` = ? ";
             $attributes = $rankModel->getAttributes();
             if ($stmt = $this->getMySqlConnection()->prepare($query)) {
                 $stmt->bind_param("s", $attributes['name']);
@@ -71,15 +72,15 @@ class SimpleRanking implements AlgorithmInterface
                 $result = $stmt->get_result();
                 $row = $result->fetch_assoc();
                 // if rank is NULL, then continue try to get it with a count.
-                if ($row[$this->rank_row] > 0) {
-                    return $row[$this->rank_row];
+                if ($row[$this->rank_column] > 0) {
+                    return $row[$this->rank_column];
                 }
             } else {
                 throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
             }
         }
         $query = "SELECT count(*) as rank" .
-            " FROM {$this->table_name} WHERE {$this->row_score} > " . $this->getScore($rankModel);
+            " FROM {$this->table_name} WHERE {$this->score_column} > " . $this->getScore($rankModel);
         $result = $this->getMySqlConnection()->query($query);
 
         if (!$result) {
@@ -94,9 +95,9 @@ class SimpleRanking implements AlgorithmInterface
         $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
         $total = intval($this->getMySqlConnection()->real_escape_string($total));
 
-        $order_by = $this->row_score;
-        if (!empty($this->rank_row) && $this->_use_between_condition) {
-            $order_by = $this->rank_row;
+        $order_by = $this->score_column;
+        if (!empty($this->rank_column) && $this->_use_between_condition) {
+            $order_by = $this->rank_column;
             $lastrank = $rank + $total;
             $query = "SELECT * " .
                 "FROM `{$this->table_name}` " .
@@ -136,7 +137,7 @@ class SimpleRanking implements AlgorithmInterface
             array_keys($attributes)
         ));
 
-        $query = "SELECT {$this->row_score} FROM {$this->table_name} WHERE " . $condition;
+        $query = "SELECT {$this->score_column} FROM {$this->table_name} WHERE " . $condition;
 
         if ($stmt = $this->getMySqlConnection()->prepare($query)) {
             //$stmt->bind_param("s", $attributes['name']);
@@ -174,12 +175,12 @@ class SimpleRanking implements AlgorithmInterface
 
     public function isReady()
     {
-        if (!$this->rank_row) {
+        if (!$this->rank_column) {
             return true;
         }
 
         $query = "SELECT count(*) as notranked" .
-            " FROM {$this->table_name} WHERE {$this->rank_row} IS NULL";
+            " FROM {$this->table_name} WHERE {$this->rank_column} IS NULL";
         $result = $this->getMySqlConnection()->query($query);
         if (!$result) {
             throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
@@ -193,12 +194,12 @@ class SimpleRanking implements AlgorithmInterface
 
     public function run()
     {
-        if (!$this->rank_row) {
+        if (!$this->rank_column) {
             return true;
         }
         // Lets update the rank column based on the score value.
-        $query = "UPDATE {$this->table_name} SET {$this->rank_row} = @r:= (@r+1)" .
-            " ORDER BY {$this->row_score} DESC;";
+        $query = "UPDATE {$this->table_name} SET {$this->rank_column} = @r:= (@r+1)" .
+            " ORDER BY {$this->score_column} DESC;";
         $res = $this->getMySqlConnection()->query("SET @r=0; ");
         if (!$res) {
             throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
