@@ -40,30 +40,8 @@ try {
         $ranking_obj->run();
     }
 
-    $object = new Object($ranking_obj);
-
-    $object->setAttributes(array('name' => $name));
-
-    $rank = $object->getRank();
-
-    $score = $object->getScore();
-
-    print 'Rank of ' . $table . ' row with ' . $data_row . ' = ' . $name .
-        ' is : ' . $rank . "\n";
-    print 'Score is ' . $score . "\n\n";
-    // List 5 rows before and 5 following the current rank.
-    $rank -= 6;
-    if ($rank < 0) {
-        $rank = 0;
-    }
-    $names = array_map(function ($model) use (&$rank, $data_row, $row_score) {
-        $arr = $model->getAttributes();
-        return ++$rank . ' : ' . $arr[$data_row] . ' : ' . $arr[$row_score];
-    }, $ranking_obj->getRowsAtRank($rank, 11));
-    print count($names) . ' rows of ' . $table . ' starting at rank = ' . ($rank - count($names) + 1) .
-        ' is :' . "\n";
-    print 'Rank        name       Score' . "\n";
-    print implode("\n", $names) . "\n";
+    // get rank for the given value.
+    print_my_rank($ranking_obj, $table, $data_row, $row_score, $name);
 
 } catch (Exception $e) {
     print $e->getMessage() . "\n";
