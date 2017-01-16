@@ -39,7 +39,7 @@ $row_score = 'score';
 $group_rank = 'group_rank';
 
 use Ranking\AlgorithmInterface;
-use Ranking\Mysql\Object;
+use Ranking\Object;
 
 function print_my_rank(AlgorithmInterface $ranking_obj, $table, $data_row, $row_score, $name)
 {

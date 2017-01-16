@@ -9,7 +9,7 @@
 require_once 'settings.php';
 
 
-use Ranking\Mysql\SimpleRanking;
+use Ranking\Mysqli\SimpleRanking;
 
 
 // Select a random name to search for.

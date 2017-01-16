@@ -16,9 +16,7 @@ $opt = [
 ];
 $pdo = new PDO($dsn, 'ranking', 'ranking', $opt);
 
-use Ranking\AlgorithmInterface;
 use Ranking\PDO\Simple as SimpleAlgorithm;
-use Ranking\Mysql\Object;
 
 // Select a random name to search for.
 $sql = <<<SQL

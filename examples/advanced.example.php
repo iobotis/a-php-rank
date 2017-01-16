@@ -8,7 +8,7 @@
 
 require_once 'settings.php';
 
-use Ranking\Mysql\AdvancedRanking;
+use Ranking\Mysqli\AdvancedRanking;
 
 $condition = '%s%';
 // Select a random name to search for.

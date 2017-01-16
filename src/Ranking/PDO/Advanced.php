@@ -4,7 +4,7 @@ namespace Ranking\PDO;
 
 use Ranking\ModelInterface;
 use Ranking\PDO\Simple;
-use Ranking\Mysql\Object;
+use Ranking\Object;
 
 /**
  * Advanced ranking is the same as Simple ranking with an optional condition and an optional secondary order.

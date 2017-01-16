@@ -6,7 +6,7 @@
  * @since 11/1/2017
  */
 
-namespace Ranking\Mysql;
+namespace Ranking;
 
 use Ranking\AlgorithmInterface;
 use Ranking\ModelInterface;
@@ -15,7 +15,7 @@ use Ranking\ModelInterface;
  * Class Object
  * This usually is a mysql row or view.
  *
- * @package Ranking\Mysql
+ * @package Ranking
  */
 class Object implements ModelInterface
 {
