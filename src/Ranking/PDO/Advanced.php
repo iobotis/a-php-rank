@@ -1,9 +1,9 @@
 <?php
 
-namespace Ranking\Mysql;
+namespace Ranking\PDO;
 
 use Ranking\ModelInterface;
-use Ranking\Mysql\SimpleRanking;
+use Ranking\PDO\Simple;
 
 /**
  * Advanced ranking is the same as Simple ranking with an optional condition and an optional secondary order.
@@ -14,7 +14,7 @@ use Ranking\Mysql\SimpleRanking;
  * @version: AdvancedRanking.php 2:48 pm
  * @since 30/8/2016
  */
-class AdvancedRanking extends SimpleRanking
+class Advanced extends Simple
 {
     private $_condition;
     private $_secondary_order = array();
@@ -26,14 +26,14 @@ class AdvancedRanking extends SimpleRanking
      * @param string $value column condition value.
      * @param string $op mysql condition operator(= > < LIKE etc).
      */
-    public function excludeByColumn($column, $value, $op = '=')
+    public function addColumnCondition($column, $value, $op = '=')
     {
-        $this->_condition = "`$column` " . $op . " '" . $this->getMySqlConnection()->real_escape_string($value) . "'";
+        $this->_condition = "`$column` " . $op . " '" . $value . "'";
     }
 
     /**
      * Set an alternative order in case 2 rows have the same score.
-     * 
+     *
      * @param string $column
      * @param string $op
      */
@@ -48,7 +48,7 @@ class AdvancedRanking extends SimpleRanking
     public function getRank(ModelInterface $rankModel)
     {
         // if rank row is supplied use it to get the rank.
-        if (!empty($this->rank_row)) {
+        if (!empty($this->rank_column)) {
             return parent::getRank($rankModel);
         }
         if (!isset($this->_condition) && empty($this->_secondary_order)) {
@@ -57,37 +57,31 @@ class AdvancedRanking extends SimpleRanking
         $score = $this->getScore($rankModel);
 
         $query = "SELECT count(*) as rank" .
-            " FROM {$this->table_name} WHERE {$this->row_score} > " . $score .
+            " FROM {$this->table_name} WHERE {$this->score_column} > " . $score .
             " AND " . $this->_condition;
 
-        $res = $this->getMySqlConnection()->query($query);
-        if (!$res) {
-            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
-        }
-        $row = $res->fetch_assoc();
+        $stmt = $this->connection->query($query);
+        $row = $stmt->fetch();
         $num_of_greater_score = $row['rank'];
 
         $attributes = $rankModel->getAttributes();
 
         $order_statement = array_map(function ($order) use (&$attributes) {
             $op = '<';
-            if($order['order'] == 'DESC') {
+            if ($order['order'] == 'DESC') {
                 $op = '>';
             }
-            return  $order["column"] . " $op '" . $attributes[$order["column"]] . "'";
+            return $order["column"] . " $op '" . $attributes[$order["column"]] . "'";
         }, $this->_secondary_order);
         $secondary_order = implode(" AND ", $order_statement) . " ";
 
         $query = "SELECT count(*) as rank" .
-            " FROM {$this->table_name} WHERE {$this->row_score} = " . $score .
+            " FROM {$this->table_name} WHERE {$this->score_column} = " . $score .
             " AND $secondary_order" .
             " AND " . $this->_condition;
 
-        $res = $this->getMySqlConnection()->query($query);
-        if (!$res) {
-            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
-        }
-        $row = $res->fetch_assoc();
+        $stmt = $this->connection->query($query);
+        $row = $stmt->fetch();
         return $num_of_greater_score + $row['rank'] + 1;
     }
 
@@ -102,15 +96,13 @@ class AdvancedRanking extends SimpleRanking
             return parent::getRowsAtRank($rank, $total);
         }
 
-        $rank = intval($this->getMySqlConnection()->real_escape_string($rank));
-        $total = intval($this->getMySqlConnection()->real_escape_string($total));
-        $order_by = $this->row_score;
+        $order_by = $this->score_column;
         $secondary_order = "";
-        if (!empty($this->rank_row)) {
-            $order_by = $this->rank_row;
+        if (!empty($this->rank_column)) {
+            $order_by = $this->rank_column;
         } elseif (!empty($this->_secondary_order)) {
             $order_statement = array_map(function ($order) {
-                return  $order["column"] . ' ' . $order['order'];
+                return $order["column"] . ' ' . $order['order'];
             }, $this->_secondary_order);
             $secondary_order = "," . implode(",", $order_statement) . " ";
         }
@@ -119,36 +111,36 @@ class AdvancedRanking extends SimpleRanking
             "WHERE " . $this->_condition . " " .
             "ORDER BY {$order_by} DESC " . $secondary_order .
             "LIMIT $rank, $total";
-        $res = $this->getMySqlConnection()->query($query);
+
+        $res = $this->connection->query($query);
         if (!$res) {
-            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            $this->throwError();
         }
-        if ($res->num_rows === 0) {
-            return array();
-        }
-        $rows = array();
-        while ($row = $res->fetch_assoc()) {
-            $mysqlRow = new Object($this);
+        $rows = $res->fetchAll();
+
+        $algorithm = $this;
+        $objects = array_map(function ($row) use (&$algorithm) {
+            $mysqlRow = new Object($algorithm);
             $mysqlRow->setAttributes($row);
-            $rows[] = $mysqlRow;
-        }
-        return $rows;
+            return $mysqlRow;
+        }, $rows);
+        return $objects;
     }
 
     public function isReady()
     {
-        if (!$this->rank_row) {
+        if (!$this->rank_column) {
             return true;
         }
 
         $query = "SELECT count(*) as notranked" .
-            " FROM {$this->table_name} WHERE {$this->rank_row} IS NULL" .
+            " FROM {$this->table_name} WHERE {$this->rank_column} IS NULL" .
             (!empty($this->_condition) ? " AND " . $this->_condition : "");
-        $result = $this->getMySqlConnection()->query($query);
+        $result = $this->connection->query($query);
         if (!$result) {
-            throw new \Exception("Query rows failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
+            $this->throwError();
         }
-        $row = $result->fetch_assoc();
+        $row = $result->fetch();
         if ($row['notranked'] > 0) {
             return false;
         }
@@ -163,29 +155,23 @@ class AdvancedRanking extends SimpleRanking
         }
 
         // if no rank column used, you cannot run the algorithm.
-        if (!$this->rank_row) {
+        if (!$this->rank_column) {
             return true;
         }
         $secondary_order = "";
         if (!empty($this->_secondary_order)) {
             $order_statement = array_map(function ($order) {
-                return  $order["column"] . ' ' . $order['order'];
+                return $order["column"] . ' ' . $order['order'];
             }, $this->_secondary_order);
             $secondary_order = "," . implode(",", $order_statement);
         }
         // Lets update the rank column based on the score value.
-        $query = "UPDATE {$this->table_name} SET {$this->rank_row} = @r:= (@r+1)"
+        $query = "UPDATE {$this->table_name} SET {$this->rank_column} = @r:= (@r+1)"
             . " WHERE " . $this->_condition .
-            " ORDER BY {$this->row_score} DESC" . $secondary_order . ";";
+            " ORDER BY {$this->score_column} DESC" . $secondary_order . ";";
 
-        $res = $this->getMySqlConnection()->query("SET @r=0; ");
-        if (!$res) {
-            throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
-        }
-        $res = $this->getMySqlConnection()->query($query);
-        if (!$res) {
-            throw new \Exception("Rank update failed: (" . $this->getMySqlConnection()->errno . ") " . $this->getMySqlConnection()->error);
-        }
+        $this->connection->query("SET @r=0; ");
+        $this->connection->query($query);
         return true;
     }
 
