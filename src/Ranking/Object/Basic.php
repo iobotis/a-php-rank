@@ -1,68 +1,67 @@
 <?php
-
 /**
  * @author Ioannis Botis
  * @date 17/1/2017
+ * @version: Basic.php 10:28 πμ
+ * @since 17/1/2017
  */
 
 namespace Ranking\Object;
 
-use Ranking\AlgorithmInterface;
+use Ranking\Object\BasicAbstract;
 use Ranking\ModelInterface;
-use Ranking\Object;
 
-
-abstract class Basic implements AlgorithmInterface
+class Basic extends BasicAbstract
 {
+
+    protected $unranked_objects;
     protected $score_property;
-    protected $rank_property;
 
-    protected $objects;
-    private $isReady = false;
-
-    abstract public function getAllObjects();
-
-    abstract public function getObject(ModelInterface $rankModel);
-
-    //abstract public function getObjectScore($object);
-
-    public function construct($score_property, $rank_property)
+    /**
+     * Basic constructor.
+     * The most simple scoring algorithm would be if the object already has a score property.
+     *
+     * @param string $score_property
+     */
+    public function __construct($score_property = 'score')
     {
         $this->score_property = $score_property;
-        $this->rank_property = $rank_property;
     }
 
-    public function getScore(ModelInterface $rankModel)
+    protected function getAllObjects()
     {
-        $object = $this->getObject($rankModel);
+        return $this->unranked_objects;
+    }
+
+    public function setAllObjects($objects)
+    {
+        $this->unranked_objects = $objects;
+    }
+
+    protected function getObject(ModelInterface $rankModel)
+    {
+        $attributes = $rankModel->getAttributes();
+
+        foreach ($this->objects as $object) {
+            if ($this->objectMatchesAttributes($object->element, $attributes)) {
+                return $object;
+            }
+        }
+        return null;
+    }
+
+    protected function getObjectScore($object)
+    {
         return $object->{$this->score_property};
     }
 
-    public function getRank(ModelInterface $rankModel)
+    private function objectMatchesAttributes($object, $attributes)
     {
-        $object = $this->getObject($rankModel);
-        return $object->{$this->rank_property};
-    }
-
-    public function getRowsAtRank($rank, $total = 1)
-    {
-        // @todo return Ranking\Object.
-        return array_slice($this->objects, $rank - 1, $total);
-    }
-
-    public function isReady()
-    {
-        return $this->isReady;
-    }
-
-    public function run()
-    {
-        $this->objects = $this->getAllObjects();
-        $property = $this->score_property;
-        usort($this->objects, function($a, $b) use (&$property)
-        {
-            return strcmp($a->{$property}, $b->{$property});
-        });
-        $this->isReady = true;
+        foreach ($attributes as $key => $attribute) {
+            if (!isset($object->{$key}) || $object->{$key} != $attribute) {
+                return false;
+            }
+        }
+        return true;
     }
 }
