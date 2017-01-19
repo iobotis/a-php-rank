@@ -32,6 +32,7 @@ class Example extends Basic {
     // Override score function and set our own.
     protected function getObjectScore($object)
     {
+        // Rank objects based on score property and # of friends.
         return $object->{$this->score_property} + $object->friends * 18;
     }
 }
