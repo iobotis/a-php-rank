@@ -1,0 +1,28 @@
+{
+  "name": "iobotis/a-php-rank",
+  "description": "PHP library to rank data",
+  "keywords": [
+    "ranking",
+    "Mysql"
+  ],
+  "homepage": "https://github.com/iobotis/a-php-rank",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ioannis Botis",
+      "email": "iobotis4@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0"
+  },
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Backup\\": "src/Ranking/"
+    }
+  }
+}
